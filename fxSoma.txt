@@ -1,0 +1,6 @@
+(num1 as text, num2 as text)=>
+
+let
+    Fonte = num1&num2
+in
+    Fonte
