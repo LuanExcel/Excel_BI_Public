@@ -1,4 +1,4 @@
-(num1 as text, num2 as text)=>
+(num1 as number, num2 as number)=>
 
 let
     Fonte = num1&num2
