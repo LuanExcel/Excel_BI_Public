@@ -1,6 +1,6 @@
 (num1 as number, num2 as number)=>
 
 let
-    Fonte = num1 + num2 +15
+    Fonte = num1 + num2 + 15
 in
     Fonte
