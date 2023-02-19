@@ -1,0 +1,32 @@
+let
+    Fonte = Tabela1,
+    data = Fonte & Table.FromList( 
+    List.Difference(
+    List.Transform(
+    {List.Min(List.Transform(Fonte[Date], Number.From))..
+    List.Max(List.Transform(Fonte[Date], Number.From))
+    },Date.From), Fonte[Date]), Splitter.SplitByNothing(), {"Date"}),
+    lst0 = Table.AddColumn(data, "Product_", each Fonte[Product]),
+    exp0 = Table.ExpandListColumn(lst0, "Product_"),
+    lst1 = Table.AddColumn(exp0, "Action_", each data[Action]),
+    exp1 = Table.ExpandListColumn(lst1, "Action_")
+    [[Date],[Product_],[Action_]],
+    dup = Table.Distinct(exp1),
+    filt = Table.SelectRows(dup, each ([Action_] <> null)),
+    mesc = Table.NestedJoin(filt, {"Date", "Product_", "Action_"}, Fonte, {"Date", "Product", "Action"}, "Duplicatas Removidas1", JoinKind.LeftOuter),
+    exp2 = Table.ExpandTableColumn(mesc, "Duplicatas Removidas1", {"Amt"}),
+    tab = Table.ReplaceValue(exp2,null,0,Replacer.ReplaceValue,{"Amt"}),
+    add = Table.AddColumn(tab, "Amount", each if [Action_] = "Sell" then [Amt]*-1 else [Amt]),
+    gp = Table.Group(add, {"Product_"}, {{"Contagem", each 
+    [
+    a = Table.Sort(_,{{"Date", Order.Ascending},{"Action_", Order.Ascending}}),
+    b = Table.AddIndexColumn(a,"Rank",1,1),
+    c = List.Buffer(a[Amount]),
+    d = Table.AddColumn(b,"Balance",each List.Sum(List.FirstN(c,[Rank])))
+    ][d]
+    }}),
+    acm = Table.ExpandTableColumn(gp, "Contagem", {"Date", "Action_", "Amt","Balance"}),
+    res = Table.Sort(acm,{{"Date", Order.Ascending}, {"Product_", Order.Ascending}, {"Action_", Order.Ascending}}),
+    tipo = Table.TransformColumnTypes(res,{{"Date", type date}})
+in
+    tipo
