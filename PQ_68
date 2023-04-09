@@ -2,9 +2,11 @@ let
     Fonte = Tabela1,
     data = Table.AddColumn(Fonte, "Personalizar", each 
 [
-a = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Date.DayOfWeek(Date.From(_))),
-b = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Text.Start( Date.MonthName(Date.From(_)),3)),
-b1 = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Date.Month(Date.From(_))),
+d1 = Number.From(Date.From([From])),
+d2 = Number.From(Date.From([To])),
+a = List.Transform({d1..d2}, each Date.DayOfWeek(Date.From(_))),
+b = List.Transform({d1..d2}, each Text.Start( Date.MonthName(Date.From(_)),3)),
+b1 = List.Transform({d1..d2}, each Date.Month(Date.From(_))),
 c = List.Zip({a,b,b1})
 ][c]),
     lis = Table.ExpandListColumn(data, "Personalizar"),
