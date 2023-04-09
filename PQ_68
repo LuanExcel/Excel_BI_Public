@@ -1,0 +1,23 @@
+let
+    Fonte = Tabela1,
+    data = Table.AddColumn(Fonte, "Personalizar", each 
+[
+a = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Date.DayOfWeek(Date.From(_))),
+b = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Text.Start( Date.MonthName(Date.From(_)),3)),
+b1 = List.Transform({Number.From(Date.From([From]))..Number.From(Date.From([To]))}, each Date.Month(Date.From(_))),
+c = List.Zip({a,b,b1})
+][c]),
+    lis = Table.ExpandListColumn(data, "Personalizar"),
+    ext = Table.TransformColumns(lis, {"Personalizar", each Text.Combine(List.Transform(_, Text.From), ","), type text}),
+    fil = Table.SelectRows(ext, each not Text.StartsWith([Personalizar], "0") and not Text.StartsWith([Personalizar], "6")),
+    div = Table.SplitColumn(fil, "Personalizar", Splitter.SplitTextByDelimiter(",", QuoteStyle.Csv), 3),
+    gp0 = Table.Group(div, {"Company", "Personalizar.2", "Personalizar.3"}, {{"Contagem", each Table.RowCount(_)}}),
+    gp = Table.AddColumn(Table.Group(Fonte, {"Company"}, {{"Contagem", each List.Sum([Sales]), type number}}),"Personalizar.2",each "Sales"),
+    tipo = Table.TransformColumnTypes(gp0,{{"Personalizar.3", type number}}),
+    clas = Table.Sort(tipo,{{"Company", Order.Ascending}, {"Personalizar.3", Order.Ascending}}),
+    rem = Table.Combine({gp,Table.RemoveColumns(clas,{"Personalizar.3"})}),
+    pv = Table.Pivot(rem, List.Distinct(rem[Personalizar.2]), "Personalizar.2", "Contagem"),
+    tab = Table.AddColumn(pv, "Row Total", each List.Sum( List.RemoveFirstN( Record.FieldValues(_),2))),
+    res = Table.Combine({tab, Table.FromRows({{"Column Total"}&List.Transform(List.RemoveFirstN(Table.ToColumns(tab),1), List.Sum)},Table.ColumnNames(tab))})
+in
+    res
