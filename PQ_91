@@ -1,0 +1,31 @@
+let
+Fonte = Tabela1,
+ad = Table.AddColumn(Fonte, "Customer", each Text.Split(Text.From([Data2]),", "))
+[[Data1],[Customer]],
+e = Table.ExpandListColumn(ad, "Customer"),
+ind = Table.AddIndexColumn(e, "ind", 1, 1, Int64.Type),
+pv = Table.Pivot(ind, List.Distinct(ind[Data1]), "Data1", "Customer"),
+pb = Table.FillDown(pv,{"Store"}),
+pa = Table.FillUp(pb,{"Visit Date"}),
+fil = Table.SelectRows(pa, each ([Customers] <> null)),
+tipo = Table.TransformColumns(fil,{{"Visit Date",each Date.From(DateTimeZone.From(_),"en-US")}}),
+gp = Table.Group(tipo, {"Customers"}, {{"Contagem", each  
+[min = List.Min(Table.AddColumn(_, "min", each [Visit Date])[min]),
+Count = List.Count(List.Distinct(_[Store])),
+CountRow = Table.RowCount(_),
+y = Table.AddColumn(_, "Dta min", each min),
+z = Table.AddColumn(y, "Rep", each 
+if CountRow = 1 then null else
+if [#"Dta min"] = [Visit Date] then "R" else
+if CountRow = Count then "RD" 
+ else "RS"),
+ i = Table.Group(z, {"Customers"}, {{"Contagem", each 
+[a = Table.AddIndexColumn(_, "ind2",1,1),
+b = Table.AddColumn(a, "Repeat", each try if a{[ind2]}[Rep] = [Rep] then "RD" else [Rep] otherwise [Rep])][b]}})
+][i]}})[[Contagem]],
+    ex = Table.ExpandTableColumn(gp, "Contagem", {"Contagem"}),
+    ep = Table.ExpandTableColumn(ex, "Contagem", {"ind", "Store", "Customers", "Visit Date", "Repeat"}),
+    cla = Table.Sort(ep,{{"ind", Order.Ascending}}),
+    res = Table.RemoveColumns(cla,{"ind"})
+in
+    res
